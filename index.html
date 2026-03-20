@@ -2,7 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Battle of Memories</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600;700&family=Shippori+Mincho:wght@400;700&display=swap');
@@ -36,8 +39,14 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  html, body {
+    background: #0a0a12 !important;
+    overscroll-behavior: none;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
   body {
-    background: var(--bg);
+    background: #0a0a12;
     color: var(--text);
     font-family: 'Noto Serif JP', serif;
     min-height: 100vh;
@@ -114,6 +123,10 @@
     color: var(--text);
   }
   .settings-item:hover { background: rgba(255,255,255,0.04); }
+  .vol-step-btn {
+    min-width: 64px;
+    font-size: 13px;
+  }
   .settings-toggle-btn {
     background: var(--bg2);
     border: 1px solid var(--border);
@@ -166,6 +179,7 @@
     gap: 12px;
     max-width: 520px;
     margin: 0 auto;
+    padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
   }
 
   .left-col { display: flex; flex-direction: column; gap: 12px; }
@@ -238,7 +252,7 @@
     opacity: 0.18;
     pointer-events: none;
   }
-  .cell.selected { border-color: var(--accent) !important; box-shadow: 0 0 12px rgba(106,127,255,0.7), inset 0 0 8px rgba(106,127,255,0.15); }
+  .cell.selected { border-color: var(--accent) !important; }
   .cell.target-hint { border-color: var(--gold) !important; border-style: dashed; box-shadow: 0 0 10px rgba(245,200,66,0.4); }
   .cell:hover:not(.empty) { border-color: var(--accent2); }
   .cell:active:not(.empty) { transform: scale(0.96); }
@@ -375,8 +389,55 @@
     grid-template-columns: repeat(8, 1fr);
     gap: 6px;
   }
-  .bench-cell {
-    aspect-ratio: 1;
+  /* ===== FIXED BENCH BAR ===== */
+  .bench-fixed-bar {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 200;
+    background: #0a0a12;
+    border-top: 1px solid var(--border);
+    padding: 4px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+  .bench-fixed-bar::after {
+    content: '';
+    display: block;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: env(safe-area-inset-bottom, 0px);
+    background: #0a0a12;
+    z-index: -1;
+  }
+  .bench-fixed-bar.visible { display: block; }
+  .bench-bar-top {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 5px;
+  }
+  .bench-fixed-label {
+    font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; flex-shrink: 0;
+  }
+  .bench-log-inline {
+    flex: 1; overflow: hidden; font-size: 10px; color: var(--text-dim);
+    white-space: nowrap; text-overflow: ellipsis; font-family: monospace; opacity: 0.7;
+  }
+  .bench-log-btn {
+    flex-shrink: 0; background: rgba(255,255,255,0.07); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text-dim); font-size: 13px;
+    width: 26px; height: 26px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; padding: 0;
+  }
+  .bench-log-btn.open { background: rgba(106,127,255,0.15); border-color: var(--accent); }
+  .log-drawer {
+    display: none; position: absolute; bottom: 100%; left: 0; right: 0;
+    background: rgba(10,10,22,0.97); border-top: 1px solid var(--border);
+    padding: 8px 10px; max-height: 180px; overflow-y: auto;
+  }
+  .log-drawer.open { display: block; }
+  .bench-grid {
+    display: flex; gap: 5px; flex-wrap: nowrap; overflow-x: auto;
+  }
+    .bench-cell {
+    width: 56px; height: 56px; flex-shrink: 0;
     border-radius: 6px;
     border: 1px solid var(--border);
     background: #0e0e1e;
@@ -388,7 +449,7 @@
     position: relative;
     font-size: 11px;
   }
-  .bench-cell.selected { border-color: var(--accent) !important; box-shadow: 0 0 8px rgba(106,127,255,0.5); }
+  .bench-cell.selected { border-color: var(--accent) !important; }
   .bench-cell:hover:not(.empty) { border-color: var(--accent2); }
   .bench-cell:active:not(.empty) { transform: scale(0.96); }
   .bench-cell.empty { opacity: 0.3; }
@@ -1616,8 +1677,7 @@
 
   .cell.has-unit-frame { background: transparent !important; border-color: transparent !important; box-shadow: none !important; }
   .bench-cell.has-unit-frame { background: transparent !important; border-color: transparent !important; box-shadow: none !important; }
-  .cell.has-unit-frame.selected .unit-frame-img,
-  .bench-cell.has-unit-frame.selected .unit-frame-img { filter: drop-shadow(0 0 8px rgba(106,127,255,0.95)) brightness(1.2); }
+  
   .cell.has-unit-frame.attacking .unit-frame-img { filter: drop-shadow(0 0 10px rgba(255,180,50,0.95)) brightness(1.18); }
   .cell.has-unit-frame.targeted .unit-frame-img  { filter: drop-shadow(0 0 10px rgba(255,80,80,0.95)) brightness(1.12); }
   .cell.has-unit-frame.enemy-front .unit-frame-img,
@@ -1758,18 +1818,36 @@
     flex-direction: column;
     gap: 4px;
   }
-  .ud-ability-type {
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.16em;
+  .ud-ability-line {
+    display: flex; align-items: baseline; gap: 2px;
+  }
+  .ud-ability-sep {
+    color: var(--text-dim); font-size: 15px; margin: 0 2px;
+  }
+  .ud-ability-timing {
+    display: none;
+    margin-top: 6px;
+    padding: 5px 10px;
+    background: rgba(167,139,250,0.1);
+    border: 1px solid rgba(167,139,250,0.3);
+    border-radius: 6px;
+    font-size: 11px;
     color: var(--accent2);
-    text-transform: uppercase;
+    animation: fade-in 0.15s ease;
+  }
+  .ud-ability-timing.visible { display: block; }
+    .ud-ability-type {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent2);
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
   }
   .ud-ability-name {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     color: #ffe066;
-    letter-spacing: 0.04em;
   }
   .ud-ability-desc {
     font-size: 12px;
@@ -2396,12 +2474,8 @@
         <button class="settings-dots-btn" onclick="toggleSettingsMenu()">&#8943;</button>
         <div class="settings-dropdown" id="settings-dropdown" style="display:none">
           <div class="settings-item">
-            <span>🔊 音量</span>
-            <input type="range" class="vol-slider" id="vol-slider" min="0" max="100" value="60" oninput="setVolume(this.value)">
-          </div>
-          <div class="settings-item">
-            <span>🔇 ミュート</span>
-            <button class="settings-toggle-btn" id="mute-btn" onclick="toggleMute()">OFF</button>
+            <span>音量</span>
+            <button class="settings-toggle-btn vol-step-btn" id="vol-step-btn" onclick="cycleVolume()">🔊 大</button>
           </div>
           <div class="settings-item">
             <span>⚡ 速度</span>
@@ -2441,33 +2515,11 @@
       <div class="panel">
         <div class="panel-title">盤面（Board）</div>
         <div class="hint-text" id="hint-text">ユニットをクリックして選択、空きマスに配置できます</div>
-        <div id="sell-hint-panel" style="display:none;margin-bottom:8px" class="sell-panel">
-          <div style="flex:1;min-width:0">
-            <span id="sell-hint-text">選択中: -</span>
-            <div id="equip-remove-list" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px"></div>
-          </div>
-          <div style="display:flex;gap:6px;flex-shrink:0;margin-left:8px">
-            <button class="btn btn-red" id="sell-confirm-btn" onclick="showSellConfirm()" style="flex-shrink:0">売却</button>
-          </div>
-        </div>
-        <!-- 売却確認パネル -->
-        <div id="sell-confirm-panel" style="display:none;margin-bottom:8px;background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.4);border-radius:8px;padding:8px 12px;text-align:center">
-          <div style="font-size:12px;color:var(--text);margin-bottom:8px" id="sell-confirm-text">本当に売却しますか？</div>
-          <div style="display:flex;gap:8px;justify-content:center">
-            <button class="btn btn-red" onclick="sellSelected()" style="padding:4px 16px;font-size:12px">売却する</button>
-            <button class="btn" onclick="hideSellConfirm()" style="padding:4px 16px;font-size:12px;border-color:var(--border);color:var(--text-dim)">キャンセル</button>
-          </div>
-        </div>
         <!-- 6マスグリッド（前列上段・後列下段） -->
         <div class="board-grid" id="player-board"></div>
       </div>
 
       <!-- BENCH -->
-      <div class="panel" style="padding:10px 12px">
-        <div class="panel-title">ベンチ（Bench）</div>
-        <div class="bench-grid" id="bench"></div>
-      </div>
-
       <!-- ITEM INVENTORY -->
       <div class="panel" id="item-panel">
         <div class="panel-title">🎒 アイテム・魔法</div>
@@ -2485,10 +2537,7 @@
       </div>
 
       <!-- LOG -->
-      <div class="panel">
-        <div class="panel-title">ログ</div>
-        <div class="log-box" id="log-box"></div>
-      </div>
+
     </div>
   </div>
 
@@ -2552,10 +2601,7 @@
         <span class="ud-stat-label">❤ HP</span>
         <span class="ud-stat-val" id="ud-hp"></span>
       </div>
-      <div class="ud-stat-item">
-        <span class="ud-stat-label">MAX HP</span>
-        <span class="ud-stat-val" id="ud-maxhp"></span>
-      </div>
+
     </div>
 
     <!-- アビリティ -->
@@ -2972,6 +3018,47 @@ function createGhost(card, x, y) {
   return ghost;
 }
 
+function addToBench(unit) {
+  for (let i = 0; i < 8; i++) {
+    if (!G.bench[i]) { G.bench[i] = unit; return true; }
+  }
+  return false;
+}
+
+function compactBench() {
+  const units = G.bench.filter(u => u !== null);
+  G.bench = [...units, ...Array(8 - units.length).fill(null)];
+}
+
+function getBenchCellAt(x, y, ghost) {
+  if (ghost) ghost.style.display = 'none';
+  const el = document.elementFromPoint(x, y);
+  if (ghost) ghost.style.display = '';
+  return el ? el.closest('[data-bench-idx]') : null;
+}
+
+function buyShopToBench(shopIdx, benchIdx) {
+  const entry = G.shop[shopIdx];
+  if (!entry || entry._isItem) return;
+  const cost = entry.tier;
+  if (G.gold < cost) { addLog('system', 'ゴールドが足りません'); return; }
+  const newUnit = {
+    uid: ++G.uid, id: entry.id, name: entry.name, tier: entry.tier, icon: entry.icon, stars: 1,
+    atk: Math.max(1, Math.floor(entry.atk_base)), hp: Math.max(1, Math.floor(entry.hp_base)),
+    maxHp: Math.max(1, Math.floor(entry.hp_base)), atk_base: entry.atk_base, hp_base: entry.hp_base,
+    ability: entry.ability, abilityType: entry.abilityType, abilityDesc: entry.abilityDesc,
+    bonusAtk: 0, equips: [], potions: [], cost: cost, _customImg: entry._customImg || null,
+  };
+  if (!addToBench(newUnit)) { addLog('system', 'ベンチが満杯です'); return; }
+  G.gold -= cost;
+  G.shop[shopIdx] = null;
+  addLog('gold', `${newUnit.icon}${newUnit.name} を購入 (-${cost}G)`);
+  Audio.playBuy();
+  checkMerge();
+  render();
+  tutOnBuy();
+}
+
 function getBoardCellAt(x, y, ghost) {
   if (ghost) ghost.style.display = 'none';
   const el = document.elementFromPoint(x, y);
@@ -2980,7 +3067,7 @@ function getBoardCellAt(x, y, ghost) {
 }
 
 function highlightDropTargets(targetCell) {
-  document.querySelectorAll('[data-board-r]').forEach(c => c.classList.remove('drop-target'));
+  document.querySelectorAll('[data-board-r],[data-bench-idx]').forEach(c => c.classList.remove('drop-target'));
   if (targetCell) targetCell.classList.add('drop-target');
 }
 
@@ -2997,7 +3084,7 @@ function addShopSwipeDrop(card, shopIdx) {
     if (!ghost) return;
     ghost.style.left = (x - card.offsetWidth/2) + 'px';
     ghost.style.top  = (y - card.offsetHeight/2) + 'px';
-    highlightDropTargets(getBoardCellAt(x, y, ghost));
+    highlightDropTargets(getBoardCellAt(x, y, ghost) || getBenchCellAt(x, y, ghost));
   }
   function end(x, y) {
     if (!dragging) return;
@@ -3005,9 +3092,14 @@ function addShopSwipeDrop(card, shopIdx) {
     card.style.opacity = '';
     if (ghost) { ghost.remove(); ghost = null; }
     highlightDropTargets(null);
-    const target = getBoardCellAt(x, y, null);
-    if (target) {
-      buyShopToCell(shopIdx, parseInt(target.dataset.boardR), parseInt(target.dataset.boardC));
+    const boardTarget = getBoardCellAt(x, y, null);
+    if (boardTarget) {
+      buyShopToCell(shopIdx, parseInt(boardTarget.dataset.boardR), parseInt(boardTarget.dataset.boardC));
+      return;
+    }
+    const benchTarget = getBenchCellAt(x, y, null);
+    if (benchTarget) {
+      buyShopToBench(shopIdx, parseInt(benchTarget.dataset.benchIdx));
     }
   }
   card.addEventListener('touchstart', e => start(e.touches[0].clientX, e.touches[0].clientY), {passive:true});
@@ -3068,7 +3160,14 @@ function addBenchSwipeDrop(cell, benchIdx) {
     if (!ghost) return;
     ghost.style.left = (x - cell.offsetWidth/2) + 'px';
     ghost.style.top  = (y - cell.offsetHeight/2) + 'px';
-    highlightDropTargets(getBoardCellAt(x, y, ghost));
+    const overShop = isOverShopArea(x, y, ghost);
+    if (overShop) {
+      ghost.style.boxShadow = '0 0 20px rgba(255,80,80,0.8)';
+      highlightDropTargets(null);
+    } else {
+      ghost.style.boxShadow = '0 8px 32px rgba(0,0,0,0.5)';
+      highlightDropTargets(getBoardCellAt(x, y, ghost));
+    }
   }
   function end(x, y) {
     if (!dragging) return;
@@ -3076,6 +3175,26 @@ function addBenchSwipeDrop(cell, benchIdx) {
     cell.style.opacity = '';
     if (ghost) { ghost.remove(); ghost = null; }
     highlightDropTargets(null);
+    // ショップへドロップ → 売却
+    if (isOverShopArea(x, y, null)) {
+      const unit = G.bench[benchIdx];
+      if (!unit) return;
+      G.bench[benchIdx] = null;
+      if (unit.equips && unit.equips.length > 0) {
+        for (const eq of unit.equips) {
+          const itemDef = ITEMS_DATA.find(i => i.id === eq.id);
+          if (itemDef) G.inventory.push({...itemDef, iid: ++G.uid});
+        }
+        addLog('info', `装備 ${unit.equips.map(e=>e.icon+e.name).join('・')} をインベントリに返却`);
+      }
+      compactBench();
+      G.gold += 1;
+      addLog('gold', `${unit.icon}${unit.name} を売却 (+1G)`);
+      Audio.playSell();
+      render();
+      return;
+    }
+    // 盤面へドロップ → 配置
     const target = getBoardCellAt(x, y, null);
     if (target) {
       const r = parseInt(target.dataset.boardR);
@@ -3203,7 +3322,7 @@ function addBoardSellSwipe(cell, r, bc) {
       }
       G.gold += 1;
       addLog('gold', `${unit.icon}${unit.name} を売却 (+1G)`);
-      Audio.playBuy && Audio.playBuy();
+      Audio.playSell();
       clearSel();
       render();
     }
@@ -3245,6 +3364,7 @@ function addInventorySellSwipe(div, invIdx) {
       G.inventory.splice(invIdx, 1);
       G.gold += 1;
       addLog('gold', `${item.icon}${item.name} を売却 (+1G)`);
+      Audio.playSell();
       if (G.selectedItem === invIdx) G.selectedItem = null;
       render();
     }
@@ -3441,21 +3561,9 @@ function closeLevelUpModal() {
 }
 
 // --- SELL ---
-function showSellConfirm() {
-  const sel = G.selected;
-  if (!sel) return;
-  const unit = sel.type==="board" ? G.board[sel.row][sel.col] : G.bench[sel.idx];
-  if (!unit) return;
-  document.getElementById("sell-confirm-text").innerHTML =
-    `<strong>${unit.icon}${unit.name}（★${unit.stars}）</strong> を売却しますか？<br><span style="color:var(--gold);font-size:11px">+1G 獲得${unit.equips&&unit.equips.length>0?" / 装備はインベントリに返却":""}</span>`;
-  document.getElementById("sell-hint-panel").style.display = "none";
-  document.getElementById("sell-confirm-panel").style.display = "block";
-}
+function showSellConfirm() {}
 
-function hideSellConfirm() {
-  document.getElementById("sell-confirm-panel").style.display = "none";
-  if (G.selected) document.getElementById("sell-hint-panel").style.display = "flex";
-}
+function hideSellConfirm() {}
 
 function sellSelected() {
   const sel = G.selected;
@@ -3475,6 +3583,7 @@ function sellSelected() {
   const val = 1;
   G.gold += val;
   addLog("gold",`${unit.icon}${unit.name} を売却 (+${val}G)`);
+  Audio.playSell();
   clearSel();
   render();
 }
@@ -3683,8 +3792,6 @@ function maybeGrantTicket(mergedUnit) {
 function clearSel() {
   G.selected = null;
   G.selectedItem = null;
-  document.getElementById("sell-hint-panel").style.display="none";
-  document.getElementById("sell-confirm-panel").style.display="none";
   render();
 }
 
@@ -3718,7 +3825,6 @@ function selectBoard(r, c) {
   }
   if (!unit) return;
   G.selected = {type:"board",row:r,col:c};
-  showSellHint(unit);
   render();
   openUnitDetail(unit, {type:"board",row:r,col:c});
 }
@@ -3765,30 +3871,11 @@ function selectBench(idx) {
   }
   if (!unit) return;
   G.selected = {type:"bench",idx};
-  showSellHint(unit);
   render();
   openUnitDetail(unit, {type:"bench",idx});
 }
 
-function showSellHint(unit) {
-  const p = document.getElementById("sell-hint-panel");
-  p.style.display = "flex";
-  document.getElementById("sell-hint-text").textContent =
-    `${unit.icon}${unit.name} ★${unit.stars}　売却: +${unit.stars}G`;
-  // 装備取り外しボタン
-  const erl = document.getElementById("equip-remove-list");
-  erl.innerHTML = "";
-  if (unit.equips && unit.equips.length > 0) {
-    unit.equips.forEach((eq, i) => {
-      const btn = document.createElement("button");
-      btn.className = "equip-remove-btn";
-      btn.innerHTML = `${eq.icon} ${eq.name} <span class="x">✕</span>`;
-      btn.title = `${eq.name} を外す`;
-      btn.onclick = (e) => { e.stopPropagation(); removeEquip(unit, i); };
-      erl.appendChild(btn);
-    });
-  }
-}
+function showSellHint() {}
 
 function removeEquip(unit, equipIdx) {
   const eq = unit.equips[equipIdx];
@@ -3802,7 +3889,6 @@ function removeEquip(unit, equipIdx) {
   }
   unit.equips.splice(equipIdx, 1);
   // sellHintを更新して再表示
-  showSellHint(unit);
   render();
 }
 
@@ -3829,6 +3915,32 @@ function updateSpeedCycleBtn() {
 }
 
 
+// 音量4段階: 0=ミュート, 1=小(33), 2=中(66), 3=大(100)
+const VOL_STEPS = [
+  { label: '🔇 OFF', value: 0 },
+  { label: '🔈 小',  value: 33 },
+  { label: '🔉 中',  value: 66 },
+  { label: '🔊 大',  value: 100 },
+];
+let _volStepIdx = 3; // デフォルト大
+
+function cycleVolume() {
+  _volStepIdx = (_volStepIdx + 1) % VOL_STEPS.length;
+  const step = VOL_STEPS[_volStepIdx];
+  Audio.setVolume(step.value);
+  if (step.value === 0) {
+    if (!Audio.isMuted()) Audio.toggleMute();
+  } else {
+    if (Audio.isMuted()) Audio.toggleMute();
+  }
+  updateVolumeBtn();
+}
+
+function updateVolumeBtn() {
+  const btn = document.getElementById('vol-step-btn');
+  if (btn) btn.textContent = VOL_STEPS[_volStepIdx].label;
+}
+
 function toggleSettingsMenu() {
   const dd = document.getElementById('settings-dropdown');
   if (!dd) return;
@@ -3851,6 +3963,7 @@ function closeSettingsOnOutside(e) {
 }
 
 function updateSettingsMenu() {
+  updateVolumeBtn();
   const speedBtn = document.getElementById('speed-cycle-btn');
   if (speedBtn) speedBtn.textContent = SPEED_LABELS[currentSpeedIdx];
   const muteBtn = document.getElementById('mute-btn');
@@ -3875,6 +3988,7 @@ function startBattle() {
   const playerUnits = getAllUnits().filter(e=>e.loc==="board").map(e=>e.unit);
   if (playerUnits.length===0) { addLog("system","盤面にユニットがいません"); return; }
   G.phase = "battle";
+  const _bb=document.getElementById("bench-fixed-bar"); if(_bb) _bb.classList.remove("visible");
   clearSel();
 
   // Generate enemy（チュートリアル時は弱い敵1体のみ）
@@ -4015,6 +4129,7 @@ let _udLoc  = null;
 
 function openUnitDetail(unit, loc) {
   if (!unit) return;
+  const _bbu=document.getElementById("bench-fixed-bar"); if(_bbu) _bbu.style.display="none";
   _udUnit = unit;
   _udLoc  = loc;
 
@@ -4041,15 +4156,24 @@ function openUnitDetail(unit, loc) {
     ? unit.atk + '<span style="font-size:11px;color:var(--green);margin-left:2px">(+' + bonusAtk + ')</span>'
     : String(unit.atk);
   document.getElementById('ud-hp').textContent = unit.hp;
-  document.getElementById('ud-maxhp').textContent = unit.maxHp;
 
   // アビリティ
   const abilityBox = document.getElementById('ud-ability-box');
   if (unit.ability) {
+    const _timingMap = {
+      '永続':'常に効果が有効', '開戦時':'戦闘開始時に1回発動',
+      '開幕時':'戦闘終了後に発動', '討伐':'敵を倒した時に発動',
+      '反撃':'ダメージを受けた時に発動', 'リベンジ':'自分が死亡した時に発動',
+      '配置時':'盤面に配置した時に発動',
+    };
+    const _timingDesc = _timingMap[unit.abilityType] || '';
     abilityBox.innerHTML =
-      '<div class="ud-ability-type">' + (unit.abilityType || '') + '</div>' +
-      '<div class="ud-ability-name">' + unit.ability + '</div>' +
-      (unit.abilityDesc ? '<div class="ud-ability-desc">' + unit.abilityDesc + '</div>' : '');
+      '<div class="ud-ability-line">' +
+        '<span class="ud-ability-type" onclick="toggleAbilityTiming(this)">' + (unit.abilityType || '') + '</span>' +
+        '<span class="ud-ability-sep">：</span>' +
+        '<span class="ud-ability-name">' + unit.ability + '</span>' +
+      '</div>' +
+      (_timingDesc ? '<div class="ud-ability-timing">' + _timingDesc + '</div>' : '');
   } else {
     abilityBox.innerHTML = '<div class="ud-no-ability">アビリティなし</div>';
   }
@@ -4209,6 +4333,7 @@ function closeUnitDetail(e) {
   if (e && e.target !== document.getElementById('unit-detail-modal')) return;
   document.getElementById('unit-detail-modal').style.display = 'none';
   _udUnit = null; _udLoc = null;
+  const _bbr=document.getElementById("bench-fixed-bar"); if(_bbr&&_bbr.classList.contains("visible")) _bbr.style.display="";
 }
 
 function showSellConfirmForUnit(unit, loc) {
@@ -4217,7 +4342,6 @@ function showSellConfirmForUnit(unit, loc) {
   } else {
     G.selected = { type: 'bench', idx: loc.idx };
   }
-  showSellHint(unit);
   render();
   showSellConfirm();
 }
@@ -5103,6 +5227,7 @@ function pickTreasure(item) {
 function proceedAfterEvent() {
   // afterBattle の残り処理を実行
   G.phase = "prep";
+  const _bbp=document.getElementById("bench-fixed-bar"); if(_bbp) _bbp.classList.add("visible");
   document.getElementById("prep-view").classList.remove("hidden");
   document.getElementById("battle-view").classList.remove("active");
   document.getElementById("phase-badge").textContent = "準備";
@@ -5317,6 +5442,9 @@ function returnToTitle() {
   document.getElementById('prep-view').classList.remove('hidden');
   document.getElementById('battle-view').classList.remove('active');
   showSpeedBtns(false);
+  // ベンチバーを非表示
+  const bb = document.getElementById('bench-fixed-bar');
+  if (bb) { bb.classList.remove('visible'); bb.style.display = ''; }
   Audio.playBgm('title');
   renderScoreboard(G.difficulty || currentScoreTab || 'normal');
 }
@@ -5327,6 +5455,35 @@ function applyEmptyFrameCSS() {
   document.documentElement.style.setProperty(
     '--empty-frame-url', 'url("' + UNIT_FRAME_B64_1 + '")'
   );
+}
+
+function toggleLogDrawer() {
+  const drawer = document.getElementById('log-drawer');
+  const btn = document.querySelector('.bench-log-btn');
+  if (!drawer) return;
+  const open = drawer.classList.toggle('open');
+  if (btn) btn.classList.toggle('open', open);
+  if (open) {
+    const lb = document.getElementById('log-box');
+    if (lb) lb.scrollTop = lb.scrollHeight;
+    setTimeout(() => document.addEventListener('click', _closeLog, {once:true}), 0);
+  }
+}
+function _closeLog(e) {
+  const bar = document.getElementById('bench-fixed-bar');
+  if (bar && !bar.contains(e.target)) {
+    const d = document.getElementById('log-drawer');
+    const b = document.querySelector('.bench-log-btn');
+    if (d) d.classList.remove('open');
+    if (b) b.classList.remove('open');
+  }
+}
+
+function toggleAbilityTiming(el) {
+  const timing = el.closest('.ud-ability-line') && el.closest('.ud-ability-line').nextElementSibling;
+  if (timing && timing.classList.contains('ud-ability-timing')) {
+    timing.classList.toggle('visible');
+  }
 }
 
 function render() {
@@ -5377,6 +5534,7 @@ function renderBench() {
     const unit = G.bench[i];
     const cell = document.createElement("div");
     cell.className="bench-cell has-unit-frame"+(unit?"":" empty");
+    cell.dataset.benchIdx = i;
     if (G.selected && G.selected.type==="bench" && G.selected.idx===i) cell.classList.add("selected");
     if (unit) cell.innerHTML=unitHtml(unit, true);
     cell.onclick=()=>selectBench(i);
@@ -5610,6 +5768,7 @@ function sellInventoryItem(i) {
   if (G.selectedItem === i) G.selectedItem = null;
   else if (G.selectedItem > i) G.selectedItem--;
   addLog("gold", `${item.icon}${item.name} を売却 (+${price}G)`);
+  Audio.playSell();
   render();
 }
 
@@ -5731,6 +5890,7 @@ function renderBattleBoard6(id, board, mirror) {
 
 // --- LOG ---
 function addLog(type, msg) {
+  const _il=document.getElementById("bench-log-inline"); if(_il) _il.textContent=msg;
   const box = document.getElementById("log-box");
   const entry = document.createElement("div");
   entry.className="log-entry "+type;
@@ -6223,7 +6383,31 @@ const Audio = (() => {
     }
   }
 
-  return { playBgm, stopBgm, playWin, playLose, playBuy, toggleMute, setVolume, isMuted, init };
+  function playSell() {
+    init(); resume();
+    if (muted) return;
+    const t = ctx.currentTime;
+    // コイン落下音：高い金属音3つ、少しずつ遅延
+    const coins = [
+      {freq:3200, delay:0,    vol:0.20, decay:0.3},
+      {freq:2600, delay:0.06, vol:0.15, decay:0.25},
+      {freq:3800, delay:0.11, vol:0.10, decay:0.2},
+    ];
+    for (const {freq, delay, vol, decay} of coins) {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'triangle';
+      o.frequency.value = freq;
+      const st = t + delay;
+      g.gain.setValueAtTime(0, st);
+      g.gain.linearRampToValueAtTime(vol, st + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.001, st + decay);
+      o.connect(g); g.connect(sfxGain);
+      o.start(st); o.stop(st + decay + 0.05);
+    }
+  }
+
+  return { playBgm, stopBgm, playWin, playLose, playBuy, playSell, toggleMute, setVolume, isMuted, init };
 })();
 
 // --- TITLE SCREEN ---
@@ -6355,6 +6539,7 @@ function startWithDifficulty(diff) {
   // ヘッダーに難易度バッジを表示
   updateDifficultyBadge();
   render();
+  const _bbd=document.getElementById("bench-fixed-bar"); if(_bbd) _bbd.classList.add("visible");
 }
 
 function updateDifficultyBadge() {
@@ -6657,5 +6842,18 @@ document.getElementById('title-screen').addEventListener('click', ensureTitleBgm
   <div style="font-size:16px;font-weight:700;color:var(--gold);margin-top:6px;letter-spacing:0.08em">スペシャルチケット入手！</div>
   <div style="font-size:11px;color:var(--text-dim);margin-top:4px">準備フェーズでいつでも使用可</div>
 </div>
+  <!-- BENCH FIXED BAR -->
+  <div class="bench-fixed-bar" id="bench-fixed-bar">
+    <div class="bench-bar-top">
+      <div class="bench-fixed-label">ベンチ</div>
+      <div class="bench-log-inline" id="bench-log-inline"></div>
+      <button class="bench-log-btn" onclick="toggleLogDrawer()">📋</button>
+    </div>
+    <div class="log-drawer" id="log-drawer">
+      <div class="log-box" id="log-box"></div>
+    </div>
+    <div class="bench-grid" id="bench"></div>
+  </div>
+
 </body>
 </html>
